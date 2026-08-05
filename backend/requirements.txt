@@ -1,0 +1,15 @@
+Django
+djangorestframework
+python-dotenv
+django-environ
+psycopg[binary]
+redis
+celery
+httpx
+openai
+aiogram
+Pillow
+orjson
+tiktoken
+tenacity
+gunicorn
