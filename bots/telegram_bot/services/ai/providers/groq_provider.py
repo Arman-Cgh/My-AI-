@@ -10,8 +10,7 @@ from services.ai.config import (
     TEMPERATURE
 )
 
-from services.ai.logger import AILogger
-
+from core.logger import logger
 
 
 class GroqProvider(AIProvider):
@@ -70,7 +69,7 @@ class GroqProvider(AIProvider):
         except Exception as e:
 
 
-            AILogger.error(
+            logger.error(
                 f"Groq error: {e}"
             )
 

@@ -2,7 +2,7 @@ import json
 import re
 
 from services.ai.model_router import ModelRouter
-from services.ai.logger import AILogger
+from core.logger import logger
 
 
 class InformationExtractor:
@@ -183,7 +183,7 @@ Assistant:
 
         if not match:
 
-            AILogger.warning(
+            logger.warning(
                 "Invalid extractor JSON"
             )
 
@@ -210,7 +210,7 @@ Assistant:
 
     except Exception as e:
 
-        AILogger.error(
+        logger.error(
             f"Extractor error: {e}"
         )
 
