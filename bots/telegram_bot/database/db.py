@@ -6,6 +6,7 @@ import sqlite3
 from datetime import datetime
 
 from config import BOT_USERNAME, BASE_DIR
+from core.logger import logger
 
 
 # ========================================================
@@ -100,8 +101,13 @@ def get_connection():
         try:
             return _connect_postgresql()
         except Exception as exc:
-            print(f"POSTGRES CONNECTION FAILED: {exc}")
-            print("FALLBACK: SQLite")
+            logger.error(
+                f"POSTGRES CONNECTION FAILED: {exc}"
+                )
+
+            logger.warning(
+                "FALLBACK: SQLite"
+            )
 
     conn = sqlite3.connect(
         DB_NAME,

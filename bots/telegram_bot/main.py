@@ -37,7 +37,7 @@ from handlers.task_actions import (
     done_task,
     delete_task
 )
-
+from core.logger import logger
 
 def main():
 
@@ -61,10 +61,10 @@ def main():
     
 
 
-    print(
-        "TOKEN:",
-        TELEGRAM_TOKEN[:15]
+    logger.info(
+    "Starting PF-AI Telegram Bot..."
     )
+    
 
 
     app = (
@@ -214,9 +214,10 @@ def main():
         )
     )
 
-    print(
-        "PF-AI Started..."
+    logger.info(
+    "PF-AI started successfully"
     )
+    
 
 
     app.run_polling()

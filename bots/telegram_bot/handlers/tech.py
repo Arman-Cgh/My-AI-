@@ -4,6 +4,7 @@ from telegram.ext import ContextTypes
 from services.ai.engine import AIEngine
 from database.db import save_message
 from utils.permissions import check_and_consume_feature
+from core.logger import logger
 
 
 async def tech_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -36,7 +37,9 @@ async def tech_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         save_message(user_id, "assistant", response)
         await update.message.reply_text(response)
     except Exception as error:
-        print("TECH COMMAND ERROR:", error)
+        logger.error(
+            f"TECH COMMAND ERROR: {error}"
+        )
         await update.message.reply_text(
             "متاسفانه در پاسخ به سوال فنی مشکلی پیش آمد."
         )
