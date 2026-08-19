@@ -1,24 +1,8 @@
-from services.tasks.router import TaskRouter
+from services.ai.intent_router import IntentRouter
 
 
-
-class IntentRouter:
-
+class IntentRouterService:
 
     @staticmethod
     def detect(message: str):
-
-
-        task_intent = TaskRouter.detect(
-            message
-        )
-
-
-        if task_intent:
-
-            return task_intent
-
-
-        return {
-            "intent": "chat"
-        }
+        return IntentRouter.detect(message)

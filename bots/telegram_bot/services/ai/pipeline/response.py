@@ -1,5 +1,10 @@
-class ResponsePipeline:
+from typing import Dict, Any
 
+from services.ai.context import ContextBuilder
+from services.ai.prompt import build_prompt
+
+
+class ResponsePipeline:
 
     def __init__(
         self,
@@ -8,95 +13,85 @@ class ResponsePipeline:
     ):
 
         self.provider_manager = provider_manager
-
         self.cache = cache
 
+    async def build_messages(
+        self,
+        user_id: int,
+        message: str,
+        intent: str
+    ):
 
+        context = ContextBuilder(
+            user_id
+        ).build(
+            intent=intent
+        )
+
+        return build_prompt(
+            user_id=user_id,
+            user_message=message,
+            context=context
+        )
 
     async def generate(
         self,
         user_id: int,
-        messages: list,
-        model: str,
+        message: str,
         intent: str,
-        user_message: str
-    ):
+        use_cache: bool = True
+    ) -> Dict[str, Any]:
 
+        if use_cache:
 
-        cacheable = self.cache.is_cacheable(
-            intent,
-            user_message
+            cached = await self.cache.get(
+                user_id,
+                message
+            )
+
+            if cached:
+
+                return {
+                    "response": cached,
+                    "cached": True,
+                    "intent": {
+                        "intent": "cached",
+                        "confidence": 1,
+                        "source": "cache"
+                    },
+                    "provider": "cache"
+                }
+
+        messages = await self.build_messages(
+            user_id=user_id,
+            message=message,
+            intent=intent
         )
 
-
-        cache_key = None
-
-
-
-        if cacheable:
-
-
-            cache_key = self.cache.generate_key(
-                user_message,
-                intent,
-                model
-            )
-
-
-            cached = self.cache.get(
-                user_id,
-                cache_key
-            )
-
-
-            if cached is not None:
-
-                print(
-                    "CACHE HIT"
-                )
-
-                return (
-                    cached,
-                    None
-                )
-
-
-            print(
-                "CACHE MISS"
-            )
-
-
-        else:
-
-            print(
-                "CACHE BYPASS"
-            )
-
-
-
-        provider = self.provider_manager.get_provider()
-
-
-
-        response = await provider.generate(
-            messages,
-            model
+        result = await self.provider_manager.generate(
+            messages
         )
 
+        response = result.get(
+            "text",
+            ""
+        )
 
+        provider = result.get(
+            "provider",
+            "unknown"
+        )
 
-        if cacheable and cache_key:
+        if use_cache:
 
-
-            self.cache.set(
+            await self.cache.set(
                 user_id,
-                cache_key,
+                message,
                 response
             )
 
-
-
-        return (
-            response,
-            provider
-        )
+        return {
+            "response": response,
+            "cached": False,
+            "provider": provider
+        }

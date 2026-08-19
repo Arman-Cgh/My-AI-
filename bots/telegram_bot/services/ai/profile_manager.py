@@ -1,34 +1,68 @@
-from database.db import update_profile
+from database.db import (
+    get_profile,
+    update_profile
+)
 
 
-def sync_profile(
-    user_id: int,
-    memory_data: dict
-):
-
-    nickname = memory_data.get(
-        "name"
-    )
-
-    bio = memory_data.get(
-        "job"
-    )
-
-    interests = memory_data.get(
-        "interests"
-    )
+class ProfileManager:
 
 
-    if isinstance(interests, list):
+    @staticmethod
+    def get(
+        user_id: int
+    ):
 
-        interests = ", ".join(
-            interests
+        profile = get_profile(
+            user_id
+        )
+
+        return profile or {}
+
+
+
+    @staticmethod
+    def update(
+        user_id: int,
+        data: dict
+    ):
+
+        if not data:
+            return
+
+
+
+        nickname = data.get(
+            "name"
         )
 
 
-    update_profile(
-        user_id,
-        nickname=nickname,
-        bio=bio,
-        interests=interests
-    )
+        bio = data.get(
+            "job"
+        )
+
+
+        interests = data.get(
+            "interests"
+        )
+
+
+        if isinstance(
+            interests,
+            list
+        ):
+
+            interests = ", ".join(
+                map(
+                    str,
+                    interests
+                )
+            )
+
+
+
+        update_profile(
+            user_id,
+            nickname=nickname,
+            bio=bio,
+            interests=interests
+        )

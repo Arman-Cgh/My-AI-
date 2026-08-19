@@ -10,7 +10,7 @@ class ReminderEngine:
 
     @staticmethod
     def get_due_tasks(
-        user_id:int
+        user_id: int
     ):
 
 
@@ -19,19 +19,23 @@ class ReminderEngine:
         )
 
 
-        today = datetime.now().date()
+        now = datetime.now()
 
 
-        result = []
+        due_tasks = []
 
 
 
         for task in tasks:
 
 
-            due_date = task.get(
-                "due_date"
-            )
+            due_date = (
+
+                task.get("due_date")
+                or ""
+
+            ).strip()
+
 
 
             if not due_date:
@@ -40,31 +44,73 @@ class ReminderEngine:
 
 
 
+            target = None
+
+
+
+            # ==========================
+            # Full datetime
+            #
+            # 2026-08-08 00:40
+            # ==========================
+
             try:
 
-                task_date = datetime.strptime(
+                target = datetime.strptime(
 
-                    due_date[:10],
+                    due_date,
 
-                    "%Y-%m-%d"
+                    "%Y-%m-%d %H:%M"
 
-                ).date()
-
-
-
-            except Exception:
-
-                continue
+                )
 
 
+            except ValueError:
 
-            if task_date <= today:
+                pass
 
 
-                result.append(
+
+            # ==========================
+            # Date only
+            #
+            # Old tasks support
+            # ==========================
+
+            if target is None:
+
+
+                try:
+
+                    target = datetime.strptime(
+
+                        due_date,
+
+                        "%Y-%m-%d"
+
+                    )
+
+
+                except ValueError:
+
+
+                    continue
+
+
+
+
+            # ==========================
+            # Check due
+            # ==========================
+
+            if target <= now:
+
+
+                due_tasks.append(
                     task
                 )
 
 
 
-        return result
+        return due_tasks
+

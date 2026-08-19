@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from services.tasks.manager import TaskManager
+from services.tasks.service import TaskService
 
 
 
@@ -11,6 +11,10 @@ async def done_task(
 ):
 
     if not update.message:
+        return
+
+
+    if not update.effective_user:
         return
 
 
@@ -27,11 +31,13 @@ async def done_task(
 
 
     try:
+
         task_id = int(
             context.args[0]
         )
 
-    except:
+
+    except ValueError:
 
         await update.message.reply_text(
             "شناسه نامعتبر است"
@@ -41,15 +47,24 @@ async def done_task(
 
 
 
-    TaskManager.complete(
+    success = TaskService.complete(
         task_id,
         user_id
     )
 
 
-    await update.message.reply_text(
-        "✅ یادآوری انجام شد"
-    )
+
+    if success:
+
+        await update.message.reply_text(
+            "✅ یادآوری انجام شد"
+        )
+
+    else:
+
+        await update.message.reply_text(
+            "❌ یادآوری پیدا نشد یا دسترسی ندارید"
+        )
 
 
 
@@ -64,7 +79,12 @@ async def delete_task(
         return
 
 
+    if not update.effective_user:
+        return
+
+
     user_id = update.effective_user.id
+
 
 
     if not context.args:
@@ -83,7 +103,8 @@ async def delete_task(
             context.args[0]
         )
 
-    except:
+
+    except ValueError:
 
         await update.message.reply_text(
             "شناسه نامعتبر است"
@@ -93,12 +114,21 @@ async def delete_task(
 
 
 
-    TaskManager.delete(
+    success = TaskService.delete(
         task_id,
         user_id
     )
 
 
-    await update.message.reply_text(
-        "🗑 یادآوری حذف شد"
-    )
+
+    if success:
+
+        await update.message.reply_text(
+            "🗑 یادآوری حذف شد"
+        )
+
+    else:
+
+        await update.message.reply_text(
+            "❌ یادآوری پیدا نشد یا دسترسی ندارید"
+        )

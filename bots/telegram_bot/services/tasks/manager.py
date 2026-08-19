@@ -1,249 +1,259 @@
-from datetime import datetime
-
 from database.db import get_connection
-
 
 
 class TaskManager:
 
+    # ==========================
+    # Create
+    # ==========================
 
     @staticmethod
     def create(
         user_id: int,
         title: str,
         description: str = "",
-        due_date: str = ""
-    ):
-
-        title = (title or "").strip()
-
-
-        if not title:
-            raise ValueError(
-                "Task title cannot be empty"
-            )
-
-
-        conn = get_connection()
-        cursor = conn.cursor()
-
-
-        cursor.execute(
-            """
-            INSERT INTO tasks
-            (
-                user_id,
-                title,
-                description,
-                due_date,
-                status,
-                created_at
-            )
-
-            VALUES(?,?,?,?,?,?)
-            """,
-            (
-                user_id,
-                title,
-                description or "",
-                due_date or "",
-                "pending",
-                datetime.now().isoformat()
-            )
-        )
-
-
-        task_id = cursor.lastrowid
-
-
-        conn.commit()
-        conn.close()
-
-
-        return task_id
-
-
-
-    @staticmethod
-    def get_all(
-        user_id:int
+        due_date: str = "",
     ):
 
         conn = get_connection()
-        cursor = conn.cursor()
 
+        try:
 
-        cursor.execute(
-            """
-            SELECT
-                id,
-                title,
-                description,
-                due_date,
-                status,
-                created_at
+            cursor = conn.cursor()
 
-            FROM tasks
-
-            WHERE user_id=?
-
-            ORDER BY id DESC
-            """,
-            (
-                user_id,
+            cursor.execute(
+                """
+                INSERT INTO tasks (
+                    user_id,
+                    title,
+                    description,
+                    due_date,
+                    completed
+                )
+                VALUES (?, ?, ?, ?, 0)
+                """,
+                (
+                    user_id,
+                    title,
+                    description,
+                    due_date,
+                ),
             )
-        )
 
+            conn.commit()
 
-        rows = cursor.fetchall()
+            return cursor.lastrowid
 
-        conn.close()
+        finally:
 
+            conn.close()
 
-
-        return [
-
-            {
-                "id": row[0],
-                "title": row[1],
-                "description": row[2],
-                "due_date": row[3],
-                "status": row[4],
-                "created_at": row[5],
-            }
-
-            for row in rows
-
-        ]
-
-
+    # ==========================
+    # Pending
+    # ==========================
 
     @staticmethod
     def get_pending(
-        user_id:int
+        user_id: int,
     ):
 
+        conn = get_connection()
+
+        try:
+
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    title,
+                    description,
+                    due_date
+                FROM tasks
+                WHERE user_id = ?
+                  AND completed = 0
+                ORDER BY id DESC
+                """,
+                (user_id,),
+            )
+
+            rows = cursor.fetchall()
+
+            return [
+                {
+                    "id": row[0],
+                    "title": row[1],
+                    "description": row[2],
+                    "due_date": row[3],
+                }
+                for row in rows
+            ]
+
+        finally:
+
+            conn.close()
+
+    # ==========================
+    # All
+    # ==========================
+
+    @staticmethod
+    def get_all(
+        user_id: int,
+    ):
 
         conn = get_connection()
-        cursor = conn.cursor()
 
+        try:
 
-        cursor.execute(
-            """
-            SELECT
-                id,
-                title,
-                description,
-                due_date,
-                status,
-                created_at
+            cursor = conn.cursor()
 
-            FROM tasks
-
-            WHERE user_id=?
-
-            AND status='pending'
-
-            ORDER BY id DESC
-            """,
-            (
-                user_id,
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    title,
+                    description,
+                    due_date,
+                    completed
+                FROM tasks
+                WHERE user_id = ?
+                ORDER BY id DESC
+                """,
+                (user_id,),
             )
-        )
 
+            rows = cursor.fetchall()
 
-        rows = cursor.fetchall()
+            return [
+                {
+                    "id": row[0],
+                    "title": row[1],
+                    "description": row[2],
+                    "due_date": row[3],
+                    "completed": bool(row[4]),
+                }
+                for row in rows
+            ]
 
-        conn.close()
+        finally:
 
+            conn.close()
 
-        return [
-
-            {
-                "id": row[0],
-                "title": row[1],
-                "description": row[2],
-                "due_date": row[3],
-                "status": row[4],
-                "created_at": row[5],
-            }
-
-            for row in rows
-
-        ]
-
-
+    # ==========================
+    # Complete
+    # ==========================
 
     @staticmethod
     def complete(
-        task_id:int,
-        user_id:int
+        task_id: int,
+        user_id: int,
     ):
 
-
         conn = get_connection()
-        cursor = conn.cursor()
 
+        try:
 
-        cursor.execute(
-            """
-            UPDATE tasks
+            cursor = conn.cursor()
 
-            SET status='done'
-
-            WHERE id=?
-
-            AND user_id=?
-            """,
-            (
-                task_id,
-                user_id
+            cursor.execute(
+                """
+                UPDATE tasks
+                SET completed = 1
+                WHERE id = ?
+                  AND user_id = ?
+                  AND completed = 0
+                """,
+                (
+                    task_id,
+                    user_id,
+                ),
             )
-        )
 
+            conn.commit()
 
-        updated = cursor.rowcount
+            return cursor.rowcount > 0
 
+        finally:
 
-        conn.commit()
-        conn.close()
+            conn.close()
 
-
-        return updated > 0
-
-
+    # ==========================
+    # Delete
+    # ==========================
 
     @staticmethod
     def delete(
-        task_id:int,
-        user_id:int
+        task_id: int,
+        user_id: int,
     ):
 
+        conn = get_connection()
+
+        try:
+
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                DELETE FROM tasks
+                WHERE id = ?
+                  AND user_id = ?
+                """,
+                (
+                    task_id,
+                    user_id,
+                ),
+            )
+
+            conn.commit()
+
+            return cursor.rowcount > 0
+
+        finally:
+
+            conn.close()
+
+    # ==========================
+    # Worker
+    # ==========================
+
+    @staticmethod
+    def get_due_tasks():
 
         conn = get_connection()
-        cursor = conn.cursor()
 
+        try:
 
-        cursor.execute(
-            """
-            DELETE FROM tasks
+            cursor = conn.cursor()
 
-            WHERE id=?
-
-            AND user_id=?
-            """,
-            (
-                task_id,
-                user_id
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    user_id,
+                    title,
+                    due_date
+                FROM tasks
+                WHERE completed = 0
+                  AND due_date != ''
+                ORDER BY id ASC
+                """
             )
-        )
 
+            rows = cursor.fetchall()
 
-        deleted = cursor.rowcount
+            return [
+                {
+                    "id": row[0],
+                    "user_id": row[1],
+                    "title": row[2],
+                    "due_date": row[3],
+                }
+                for row in rows
+            ]
 
+        finally:
 
-        conn.commit()
-        conn.close()
-
-
-        return deleted > 0
+            conn.close()

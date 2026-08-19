@@ -20,6 +20,7 @@ def build_prompt(
     datetime=None
 ):
 
+
     # ==========================
     # Context compatibility
     # ==========================
@@ -72,20 +73,32 @@ def build_prompt(
     if isinstance(memory, dict):
 
         memory_text = "\n".join(
+
             [
+
                 f"- {key}: {value}"
+
                 for key, value in memory.items()
+
                 if value
+
             ]
+
         )
+
 
     else:
 
         memory_text = (
+
             memory
+
             if memory
+
             else
+
             "حافظه‌ای ثبت نشده است."
+
         )
 
 
@@ -95,12 +108,16 @@ def build_prompt(
     # ==========================
 
     profile_text = json.dumps(
+
         profile or {},
+
         ensure_ascii=False,
+
         separators=(
             ",",
             ":"
         )
+
     )
 
 
@@ -110,31 +127,44 @@ def build_prompt(
     # ==========================
 
     state_text = json.dumps(
+
         state or {},
+
         ensure_ascii=False,
+
         separators=(
             ",",
             ":"
         )
+
     )
 
 
 
     # ==========================
-    # History compression
+    # History
     # ==========================
 
     history = (
+
         history or []
+
     )[-MAX_HISTORY_MESSAGES:]
 
 
+
     history_text = "\n".join(
+
         [
+
             f"{item['role']}: {item['content']}"
+
             for item in history
+
             if item.get("content")
+
         ]
+
     )
 
 
@@ -147,11 +177,16 @@ def build_prompt(
 
 
     # ==========================
-    # System Message
+    # System Prompt
     # ==========================
 
     system_message = f"""
+
 {SYSTEM_PROMPT}
+
+
+نام دستیار:
+PF-AI
 
 
 شخصیت دستیار:
@@ -178,12 +213,17 @@ def build_prompt(
 {history_text}
 
 
+
 قوانین پاسخ:
+
 - همیشه از اطلاعات موجود استفاده کن.
 - اطلاعات ذخیره شده را دوباره از کاربر نپرس.
 - چیزی که نمی‌دانی را حدس نزن.
 - پاسخ طبیعی و فارسی باشد.
 - خودت را PF-AI معرفی کن.
+- اگر اطلاعاتی برای حافظه مناسب بود، فقط از سیستم حافظه استفاده کن.
+
+
 """
 
 

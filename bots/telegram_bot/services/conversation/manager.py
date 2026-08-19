@@ -1,3 +1,5 @@
+from services.conversation.session import ConversationSession
+
 from database.db import (
     save_message,
     get_history
@@ -7,69 +9,240 @@ from database.db import (
 class ConversationManager:
 
 
-    MAX_CONTEXT_MESSAGES = 20
-
-
-
-    @staticmethod
-    def add_message(
-        user_id:int,
-        role:str,
-        content:str
+    def __init__(
+        self,
+        max_messages=20
     ):
 
-        if not content:
-            return
+        self.session = ConversationSession()
+
+        self.max_messages = max_messages
+
+
+
+    # ==========================
+    # Add User Message
+    # ==========================
+
+    def add_user_message(
+        self,
+        user_id,
+        message
+    ):
+
+        self._ensure_loaded(
+            user_id
+        )
+
+
+        self.session.add_message(
+            user_id,
+            "user",
+            message
+        )
 
 
         save_message(
             user_id,
-            role,
-            content
+            "user",
+            message
+        )
+
+
+        self._trim(
+            user_id
         )
 
 
 
-    @staticmethod
+    # ==========================
+    # Add Assistant Message
+    # ==========================
+
+    def add_assistant_message(
+        self,
+        user_id,
+        message
+    ):
+
+        self._ensure_loaded(
+            user_id
+        )
+
+
+        self.session.add_message(
+            user_id,
+            "assistant",
+            message
+        )
+
+
+        save_message(
+            user_id,
+            "assistant",
+            message
+        )
+
+
+        self._trim(
+            user_id
+        )
+
+
+
+    # ==========================
+    # Get History
+    # ==========================
+
     def get_history(
-        user_id:int,
-        limit=None
+        self,
+        user_id
     ):
 
-        limit = (
-            limit
-            or
-            ConversationManager.MAX_CONTEXT_MESSAGES
+
+        messages = self.session.get_messages(
+            user_id
         )
 
 
-        rows = get_history(
+        if messages:
+
+            return messages
+
+
+
+        history = get_history(
             user_id,
-            limit
+            self.max_messages
         )
 
 
-        return [
-            {
-                "role": role,
-                "content": message
-            }
+        for role, message in history:
 
-            for role,message in rows
-            if message
-        ]
+            self.session.add_message(
+                user_id,
+                role,
+                message
+            )
 
 
+        return self.session.get_messages(
+            user_id
+        )
 
-    @staticmethod
-    def needs_summary(
-        user_id:int
+
+
+    # ==========================
+    # Clear Conversation
+    # ==========================
+
+    def clear(
+        self,
+        user_id
     ):
 
-        history = ConversationManager.get_history(
-            user_id,
-            100
+        self.session.clear_messages(
+            user_id
         )
 
 
-        return len(history) > ConversationManager.MAX_CONTEXT_MESSAGES
+
+    # ==========================
+    # Metadata
+    # ==========================
+
+    def set_metadata(
+        self,
+        user_id,
+        key,
+        value
+    ):
+
+        self.session.set_metadata(
+            user_id,
+            key,
+            value
+        )
+
+
+
+    def get_metadata(
+        self,
+        user_id,
+        key,
+        default=None
+    ):
+
+        return self.session.get_metadata(
+            user_id,
+            key,
+            default
+        )
+
+
+
+    # ==========================
+    # Load From Database
+    # ==========================
+
+    def _ensure_loaded(
+        self,
+        user_id
+    ):
+
+        if self.session.get(
+            user_id
+        ):
+
+            return
+
+
+
+        history = get_history(
+            user_id,
+            self.max_messages
+        )
+
+
+        for role, message in history:
+
+            self.session.add_message(
+                user_id,
+                role,
+                message
+            )
+
+
+
+    # ==========================
+    # Trim
+    # ==========================
+
+    def _trim(
+        self,
+        user_id
+    ):
+
+        messages = self.session.get_messages(
+            user_id,
+            limit=999
+        )
+
+
+        if len(messages) <= self.max_messages:
+
+            return
+
+
+
+        excess = (
+            len(messages)
+            -
+            self.max_messages
+        )
+
+
+        self.session.remove_oldest(
+            user_id,
+            excess
+        )

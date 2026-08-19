@@ -3,8 +3,8 @@ from openai import AsyncOpenAI
 from .base import AIProvider
 
 from services.ai.config import (
-    AI_API_KEY,
-    AI_BASE_URL,
+    GROQ_API_KEY,
+    GROQ_BASE_URL,
     AI_MODEL,
     MAX_TOKENS,
     TEMPERATURE
@@ -21,9 +21,9 @@ class GroqProvider(AIProvider):
 
         self.client = AsyncOpenAI(
 
-            api_key=AI_API_KEY,
+            api_key=GROQ_API_KEY,
 
-            base_url=AI_BASE_URL
+            base_url=GROQ_BASE_URL
 
         )
 

@@ -1,8 +1,9 @@
 from openai import AsyncOpenAI
 
 from services.ai.config import (
-    AI_API_KEY,
-    AI_BASE_URL,
+    OPENROUTER_API_KEY,
+    OPENROUTER_BASE_URL,
+    OPENROUTER_MODEL,
     MAX_TOKENS,
     TEMPERATURE
 )
@@ -14,21 +15,29 @@ class OpenRouterProvider:
     def __init__(self):
 
         self.client = AsyncOpenAI(
-            api_key=AI_API_KEY,
-            base_url=AI_BASE_URL
+
+            api_key=OPENROUTER_API_KEY,
+
+            base_url=OPENROUTER_BASE_URL
+
         )
 
 
 
     async def generate(
+
         self,
+
         messages,
-        model
+
+        model: str = None
+
     ):
+
 
         response = await self.client.chat.completions.create(
 
-            model=model,
+            model=model or OPENROUTER_MODEL,
 
             messages=messages,
 
@@ -39,4 +48,12 @@ class OpenRouterProvider:
         )
 
 
-        return response.choices[0].message.content
+        return (
+
+            response
+            .choices[0]
+            .message
+            .content
+            .strip()
+
+        )

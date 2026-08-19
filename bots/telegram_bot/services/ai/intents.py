@@ -1,6 +1,7 @@
 class IntentResult:
 
 
+
     def __init__(
         self,
         intent: str,
@@ -16,7 +17,9 @@ class IntentResult:
 
 
 
-    def to_dict(self):
+    def to_dict(
+        self
+    ):
 
         return {
 
@@ -30,16 +33,81 @@ class IntentResult:
 
 
 
-    def __str__(self):
+    def __str__(
+        self
+    ):
 
         return self.intent
 
 
 
-    def __eq__(self, other):
+    def __repr__(
+        self
+    ):
 
-        if isinstance(other, str):
+        return (
+
+            f"IntentResult("
+            f"intent='{self.intent}', "
+            f"confidence={self.confidence}, "
+            f"source='{self.source}')"
+
+        )
+
+
+
+    def __eq__(
+        self,
+        other
+    ):
+
+
+        if isinstance(
+            other,
+            str
+        ):
 
             return self.intent == other
 
+
+
+        if isinstance(
+            other,
+            IntentResult
+        ):
+
+            return (
+
+                self.intent == other.intent
+
+                and
+
+                self.source == other.source
+
+            )
+
+
+
         return False
+
+
+
+    def __hash__(
+        self
+    ):
+
+        return hash(
+            (
+                self.intent,
+                self.source
+            )
+        )
+
+
+
+    def has_confidence(
+        self,
+        threshold=0.5
+    ):
+
+        return self.confidence >= threshold

@@ -1,159 +1,81 @@
 from services.ai.intents import IntentResult
-
+from services.tasks.router import TaskRouter
 
 
 class IntentRouter:
 
-
-
-    RULES = {
-
-
-        "task": {
-
-            "keywords": [
-
-                "یادم بنداز",
-
-                "یادآوری",
-
-                "یادآوری کن",
-
-                "یک کار",
-
-                "وظیفه",
-
-                "task",
-
-                "remind"
-
-            ],
-
-            "confidence": 0.95
-
-        },
-
-
-
-        "memory": {
-
-            "keywords": [
-
-                "اسم من",
-
-                "من کی هستم",
-
-                "درباره من",
-
-                "یادت باشه",
-
-                "به خاطر بسپار"
-
-            ],
-
-            "confidence": 0.90
-
-        },
-
-
-
-        "code": {
-
-            "keywords": [
-
-                "کد",
-
-                "python",
-
-                "پایتون",
-
-                "برنامه نویسی",
-
-                "خطا",
-
-                "error"
-
-            ],
-
-            "confidence": 0.85
-
-        }
-
-
-    }
-
-
-
     @staticmethod
-    def detect(
-        message: str
-    ):
-
+    def detect(message: str) -> IntentResult:
 
         if not message:
-
             return IntentResult(
-                "chat",
-                0.0,
-                "empty"
+                intent="chat",
+                confidence=0.0,
+                source="default",
             )
 
+        task_result = TaskRouter.detect(message)
 
+        if task_result:
+            return IntentResult(
+                intent="task",
+                confidence=task_result.get("confidence", 0.95),
+                source="task_router",
+            )
 
         text = message.lower().strip()
 
+        memory_keywords = (
+            "یادم باشه",
+            "یادت باشه",
+            "یاد بگیر",
+            "ذخیره کن",
+            "به خاطر بسپار",
+            "فراموش نکن",
+            "اسم من",
+            "نام من",
+            "من کی هستم",
+            "remember",
+            "save this",
+            "remember this",
+            "my name",
+        )
 
+        for keyword in memory_keywords:
+            if keyword in text:
+                return IntentResult(
+                    intent="memory",
+                    confidence=0.90,
+                    source="keyword",
+                )
 
-        best_match = None
+        code_keywords = (
+            "کد",
+            "کدنویسی",
+            "پایتون",
+            "ارور",
+            "خطا",
+            "باگ",
+            "تابع",
+            "کلاس",
+            "python",
+            "code",
+            "error",
+            "bug",
+            "function",
+            "class",
+        )
 
-
-
-        best_score = 0
-
-
-
-        for intent, data in IntentRouter.RULES.items():
-
-
-            for keyword in data["keywords"]:
-
-
-                if keyword.lower() in text:
-
-
-                    score = data["confidence"]
-
-
-
-                    if score > best_score:
-
-                        best_score = score
-
-                        best_match = intent
-
-
-
-        if best_match:
-
-
-            return IntentResult(
-
-                best_match,
-
-                best_score,
-
-                "keyword"
-
-            )
-
-
+        for keyword in code_keywords:
+            if keyword in text:
+                return IntentResult(
+                    intent="code",
+                    confidence=0.85,
+                    source="keyword",
+                )
 
         return IntentResult(
-
-            "chat",
-
-            0.5,
-
-            "default"
-
+            intent="chat",
+            confidence=0.50,
+            source="default",
         )

@@ -1,36 +1,30 @@
-from services.ai.intents import IntentResult
+from services.conversation.planner import ConversationPlanner
 
 
 class ConversationRouter:
 
+    def __init__(
+        self,
+        planner=None,
+    ):
 
-    @staticmethod
-    def route(intent_result):
+        self.planner = (
+            planner
+            or ConversationPlanner()
+        )
 
-        if not isinstance(
-            intent_result,
-            IntentResult
-        ):
-            return "chat"
+    def route(
+        self,
+        intent,
+    ):
 
+        plan = self.planner.create_plan(
+            intent
+        )
 
-
-        if intent_result.intent == "task":
-
-            return "task"
-
-
-
-        if intent_result.intent == "memory":
-
-            return "memory"
-
-
-
-        if intent_result.intent == "code":
-
-            return "code"
-
-
-
-        return "chat"
+        return {
+            "action": plan.action,
+            "intent": plan.intent,
+            "requires_ai": plan.requires_ai,
+            "save_history": plan.save_history,
+        }

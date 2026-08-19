@@ -8,15 +8,11 @@ from telegram.ext import (
     filters
 )
 
-
 from services.tasks.worker import TaskWorker
-
 
 from services.ai.config import TELEGRAM_TOKEN
 
-
 from database.db import init_db
-
 
 from handlers.start import start
 from handlers.help import help_command
@@ -24,20 +20,23 @@ from handlers.plan import plan_command
 from handlers.tech import tech_command
 from handlers.message import handle_message
 
-
 from handlers.admin_panel import admin_panel
 from handlers.callbacks import callback_dispatcher
-
 
 from handlers.profile import profile
 from handlers.clear import clear_memory
 from handlers.about import about
-from handlers.user_callbacks import buy_command, referral_command
 
+from handlers.user_callbacks import (
+    buy_command,
+    referral_command
+)
 
 from handlers.tasks import tasks_command
-from handlers.task_actions import done_task, delete_task
-
+from handlers.task_actions import (
+    done_task,
+    delete_task
+)
 
 
 def main():
@@ -48,21 +47,24 @@ def main():
             application.bot
         )
 
+
+        # ذخیره استاندارد در telegram Application
+        application.bot_data["task_worker"] = worker
+
+
         asyncio.create_task(
             worker.start()
         )
 
 
-
     init_db()
-
+    
 
 
     print(
         "TOKEN:",
         TELEGRAM_TOKEN[:15]
     )
-
 
 
     app = (
@@ -78,11 +80,9 @@ def main():
     )
 
 
-
     # ==================
     # Commands
     # ==================
-
 
     app.add_handler(
         CommandHandler(
@@ -164,11 +164,9 @@ def main():
     )
 
 
-
     # ==================
     # Tasks
     # ==================
-
 
     app.add_handler(
         CommandHandler(
@@ -177,26 +175,26 @@ def main():
         )
     )
 
+
     app.add_handler(
         CommandHandler(
             "done",
             done_task
+        )
     )
-)
 
 
     app.add_handler(
         CommandHandler(
             "delete",
             delete_task
+        )
     )
-)
 
 
     # ==================
     # Callbacks
     # ==================
-
 
     app.add_handler(
         CallbackQueryHandler(
@@ -205,11 +203,9 @@ def main():
     )
 
 
-
     # ==================
     # Messages
     # ==================
-
 
     app.add_handler(
         MessageHandler(
@@ -218,12 +214,9 @@ def main():
         )
     )
 
-
-
     print(
         "PF-AI Started..."
     )
-
 
 
     app.run_polling()
